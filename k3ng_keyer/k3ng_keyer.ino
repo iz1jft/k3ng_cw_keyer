@@ -1983,6 +1983,8 @@ byte send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
 #ifdef FEATURE_WINKEY_EMULATION
   byte winkey_serial_echo = 1;
   byte winkey_host_open = 0;
+  // Private Morse Arcade extension, opt-in for this host session only.
+  byte morse_arcade_active = 0;
   unsigned int winkey_last_unbuffered_speed_wpm = 0;
   byte winkey_speed_state = WINKEY_UNBUFFERED_SPEED;
   byte winkey_buffer_counter = 0;
@@ -7080,6 +7082,9 @@ void send_dah(){
 
 void tx_and_sidetone_key (int state)
 {
+  #ifdef FEATURE_WINKEY_EMULATION
+    byte arcade_previous_key_state = key_state;
+  #endif
 
   #if defined(FEATURE_COMPETITION_COMPRESSION_DETECTION)
 
@@ -7252,6 +7257,15 @@ void tx_and_sidetone_key (int state)
     }
 
   #endif //FEATURE_PTT_INTERLOCK
+
+  #ifdef FEATURE_WINKEY_EMULATION
+    if (morse_arcade_active && winkey_host_open &&
+        primary_serial_port_mode == SERIAL_WINKEY_EMULATION &&
+        arcade_previous_key_state != key_state) {
+      // Control bytes cannot be confused with printable echo, speed or status.
+      primary_serial_port->write((byte)(key_state ? 0x1c : 0x1d));
+    }
+  #endif
 
   #if defined(FEATURE_INTERNET_LINK)
     link_key(state);
@@ -12280,6 +12294,7 @@ void service_winkey(byte action) {
             #endif //DEBUG_WINKEY
             break;  // calibrate command
           case 0x01:
+            morse_arcade_active = 0;
             #ifdef DEBUG_WINKEY
               debug_serial_port->println("service_winkey:WINKEY_ADMIN_COMMAND 0x01");
             #endif //DEBUG_WINKEY
@@ -12290,6 +12305,7 @@ void service_winkey(byte action) {
             #endif //__AVR__
             break;  // reset command
           case 0x02:  // host open command - send version back to host
+            morse_arcade_active = 0;
             #ifdef OPTION_WINKEY_2_SUPPORT
               winkey_port_write(WINKEY_2_REPORT_VERSION_NUMBER,1);
             #else //OPTION_WINKEY_2_SUPPORT
@@ -12308,6 +12324,7 @@ void service_winkey(byte action) {
             #endif
             break;
           case 0x03: // host close command
+            morse_arcade_active = 0;
             winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
             manual_ptt_invoke = 0;
             winkey_host_open = 0;
@@ -12442,6 +12459,21 @@ void service_winkey(byte action) {
             winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
             break;
           #endif //OPTION_WINKEY_2_SUPPORT
+
+          // Private extension; unused admin opcodes in this K3NG fork.
+          case 0xE0: // Morse Arcade disable (no reply)
+            morse_arcade_active = 0;
+            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
+            break;
+          case 0xE1: // Morse Arcade v1 enable, only after host open
+            if (winkey_host_open) {
+              morse_arcade_active = 1;
+              primary_serial_port->write((byte)0x1e);
+              primary_serial_port->write((byte)0x1f);
+              primary_serial_port->write((byte)(key_state ? 0x1c : 0x1d));
+            }
+            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
+            break;
 
           #ifdef FEATURE_SO2R_BASE
             case 0xF0: // Send SO2R device information

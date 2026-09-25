@@ -1,0 +1,146 @@
+[
+  {
+    "sent": [
+      0,
+      2
+    ],
+    "label": "open",
+    "received": [
+      23
+    ]
+  },
+  {
+    "sent": [
+      11,
+      1
+    ],
+    "label": "normal_down",
+    "received": []
+  },
+  {
+    "sent": [
+      11,
+      0
+    ],
+    "label": "normal_up",
+    "received": []
+  },
+  {
+    "sent": [
+      0,
+      225
+    ],
+    "label": "enable",
+    "received": [
+      30,
+      31,
+      29
+    ]
+  },
+  {
+    "sent": [
+      11,
+      1
+    ],
+    "label": "arcade_down",
+    "received": [
+      28
+    ]
+  },
+  {
+    "sent": [
+      11,
+      1
+    ],
+    "label": "duplicate_down",
+    "received": []
+  },
+  {
+    "sent": [
+      11,
+      0
+    ],
+    "label": "arcade_up",
+    "received": [
+      29
+    ]
+  },
+  {
+    "sent": [
+      0,
+      224
+    ],
+    "label": "disable",
+    "received": []
+  },
+  {
+    "sent": [
+      11,
+      1
+    ],
+    "label": "disabled_down",
+    "received": []
+  },
+  {
+    "sent": [
+      11,
+      0
+    ],
+    "label": "disabled_up",
+    "received": []
+  },
+  {
+    "sent": [
+      0,
+      225
+    ],
+    "label": "enable_again",
+    "received": [
+      30,
+      31,
+      29
+    ]
+  },
+  {
+    "sent": [
+      0,
+      2
+    ],
+    "label": "reopen",
+    "received": [
+      23
+    ]
+  },
+  {
+    "sent": [
+      11,
+      1
+    ],
+    "label": "reopened_down",
+    "received": []
+  },
+  {
+    "sent": [
+      11,
+      0
+    ],
+    "label": "reopened_up",
+    "received": []
+  },
+  {
+    "sent": [
+      0,
+      3
+    ],
+    "label": "close",
+    "received": []
+  },
+  {
+    "sent": [
+      0,
+      225
+    ],
+    "label": "closed_enable",
+    "received": []
+  }
+]
