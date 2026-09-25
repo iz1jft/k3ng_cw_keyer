@@ -1769,6 +1769,16 @@ If you offer a hardware kit using this software, show your appreciation by sendi
 #endif
 #endif
 
+// MK2 arcade build: mute the local buzzer, including startup/command beeps.
+// Keep key_state and CW timing intact for the serial sidetone events.
+#if defined(HARDWARE_OPENCWKEYER_MK2) && defined(__AVR__)
+  #undef OPTION_SIDETONE_DIGITAL_OUTPUT_NO_SQUARE_WAVE
+  #undef tone
+  #undef noTone
+  #define tone(...) ((void)0)
+  #define noTone(...) ((void)0)
+#endif
+
 #define memory_area_start (sizeof(configuration)+5)
 
 // Variables and stuff
