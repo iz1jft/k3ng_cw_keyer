@@ -1,0 +1,20 @@
+name: Build OpenCWKeyer MK2
+on:
+  push:
+    branches: [arcade-serial-sidetone]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  nano:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - run: arduino-cli core update-index
+      - run: arduino-cli core install arduino:avr@1.8.6
+      - run: arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328old --output-dir build k3ng_keyer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opencwkeyer-mk2-serial-sidetone
+          path: build/*.hex
