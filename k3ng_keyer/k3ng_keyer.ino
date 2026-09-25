@@ -1983,6 +1983,9 @@ byte send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
 #ifdef FEATURE_WINKEY_EMULATION
   byte winkey_serial_echo = 1;
   byte winkey_host_open = 0;
+  #if defined(HARDWARE_OPENCWKEYER_MK2)
+    byte arcade_sidetone_enabled = 0; // Opt-in extension; reset on host open/close.
+  #endif
   unsigned int winkey_last_unbuffered_speed_wpm = 0;
   byte winkey_speed_state = WINKEY_UNBUFFERED_SPEED;
   byte winkey_buffer_counter = 0;
@@ -7080,6 +7083,9 @@ void send_dah(){
 
 void tx_and_sidetone_key (int state)
 {
+  #if defined(HARDWARE_OPENCWKEYER_MK2) && defined(FEATURE_WINKEY_EMULATION)
+    byte arcade_previous_key_state = key_state;
+  #endif
 
   #if defined(FEATURE_COMPETITION_COMPRESSION_DETECTION)
 
@@ -7255,6 +7261,14 @@ void tx_and_sidetone_key (int state)
 
   #if defined(FEATURE_INTERNET_LINK)
     link_key(state);
+  #endif
+
+  #if defined(HARDWARE_OPENCWKEYER_MK2) && defined(FEATURE_WINKEY_EMULATION)
+    if (arcade_sidetone_enabled && winkey_host_open &&
+        primary_serial_port_mode == SERIAL_WINKEY_EMULATION &&
+        key_state != arcade_previous_key_state) {
+      winkey_port_write(key_state ? 0xF9 : 0xF8, 1);
+    }
   #endif
 
   check_ptt_tail();
@@ -12272,6 +12286,23 @@ void service_winkey(byte action) {
 
       if (winkey_status == WINKEY_ADMIN_COMMAND) {
         switch (incoming_serial_byte) {
+          #if defined(HARDWARE_OPENCWKEYER_MK2)
+          // IZ1JFT arcade extension: 00 20 enables; 00 21 disables.
+          // FA acknowledges support, F8 = key up, F9 = key down.
+          case 0x20:
+            if (winkey_host_open) {
+              arcade_sidetone_enabled = 1;
+              winkey_port_write(0xFA, 1);
+              winkey_port_write(key_state ? 0xF9 : 0xF8, 1);
+            }
+            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
+            break;
+          case 0x21:
+            if (arcade_sidetone_enabled) winkey_port_write(0xF8, 1);
+            arcade_sidetone_enabled = 0;
+            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
+            break;
+          #endif
           case 0x00:
             winkey_status = WINKEY_UNSUPPORTED_COMMAND;
             winkey_parmcount = 1;
@@ -12290,6 +12321,9 @@ void service_winkey(byte action) {
             #endif //__AVR__
             break;  // reset command
           case 0x02:  // host open command - send version back to host
+            #if defined(HARDWARE_OPENCWKEYER_MK2)
+              arcade_sidetone_enabled = 0;
+            #endif
             #ifdef OPTION_WINKEY_2_SUPPORT
               winkey_port_write(WINKEY_2_REPORT_VERSION_NUMBER,1);
             #else //OPTION_WINKEY_2_SUPPORT
@@ -12308,6 +12342,10 @@ void service_winkey(byte action) {
             #endif
             break;
           case 0x03: // host close command
+            #if defined(HARDWARE_OPENCWKEYER_MK2)
+              if (arcade_sidetone_enabled) winkey_port_write(0xF8, 1);
+              arcade_sidetone_enabled = 0;
+            #endif
             winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
             manual_ptt_invoke = 0;
             winkey_host_open = 0;
